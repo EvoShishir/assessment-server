@@ -1,12 +1,21 @@
 const { User } = require("../models/userModel");
 
+function generateOTP() {
+  const min = 100000;
+  const max = 999999;
+  const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+  return randomNumber;
+}
+
 const createUser = async (req, res, next) => {
+  const otp = generateOTP();
   try {
     let user = new User({
       name: req.body.name,
       phone: req.body.phone,
       email: req.body.email.toLowerCase(),
       password: req.body.password,
+      otp: otp,
     });
 
     user = await user.save();
@@ -17,6 +26,26 @@ const createUser = async (req, res, next) => {
       success: true,
       user,
       token,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const verifyEmail = async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        emailConfirmed: req.body.emailConfirmed,
+      },
+      {
+        new: true,
+      }
+    );
+    res.status(200).json({
+      success: true,
+      user,
     });
   } catch (error) {
     next(error);
@@ -66,3 +95,4 @@ const loginUser = async (req, res, next) => {
 exports.createUser = createUser;
 exports.getMyProfile = getMyProfile;
 exports.loginUser = loginUser;
+exports.verifyEmail = verifyEmail;
